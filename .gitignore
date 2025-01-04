@@ -11,6 +11,10 @@
 !.yarn/versions
 .env
 
+# tinyllama model
+src/app/api/model/tinyllama-1.1b-chat-v0.3.Q5_K_M.gguf
+
+
 # testing
 /coverage
 

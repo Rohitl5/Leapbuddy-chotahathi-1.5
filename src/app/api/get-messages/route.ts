@@ -12,5 +12,7 @@ export const POST = async (req: Request) => {
     .from(messages)
     .where(eq(messages.chatId, chatId))
     .orderBy(messages.id);
+
+    console.log("Fetching messages for chatId:", chatId); //log for chat/route.ts 
   return NextResponse.json(_messages);
 };

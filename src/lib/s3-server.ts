@@ -21,7 +21,7 @@ export async function downloadFromS3(file_key: string): Promise<string> {
     const { Body } = await s3.send(new GetObjectCommand(params));
 
     if (Body instanceof Readable) {
-      const file_name = `/nli/pdf-${Date.now()}.pdf`;
+      const file_name = `./nli/pdf-${Date.now()}.pdf`;
       const writeStream = fs.createWriteStream(file_name);
 
       // Pipe the readable stream to the writable stream
