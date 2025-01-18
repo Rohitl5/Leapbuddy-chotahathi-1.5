@@ -2,15 +2,13 @@
   "name": "leapbuddy-nli",
   "version": "0.1.0",
   "private": true,
-"scripts": {
-  "dev": "concurrently -k \"npm run next\" \"npm run flask\" \"npm run node\"",
-  "next": "next dev",
-  "flask": "python src/app/api/model/backend.py",
-  "node": "node server.js",
-  "build": "next build",
-  "start": "next start",
-  "lint": "next lint"
-},
+
+  "scripts": {
+    "dev": "set NODE_OPTIONS='--max-old-space-size=8192' && next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
 
   "dependencies": {
     "@aws-sdk/client-s3": "^3.685.0",

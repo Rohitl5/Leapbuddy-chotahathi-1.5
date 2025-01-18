@@ -5,9 +5,36 @@ import Link from "next/link";
 import { Bold, LogIn } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
 
+import { db } from "@/lib/db";
+import { chats } from "@/lib/db/schema";
+import { eq, desc } from "drizzle-orm";
+
+
+
+
+
 export default async function Home() {
   const { userId } = await auth();
   const isAuth = !!userId;
+
+// greatest id chat of the user 
+let greatestChatId = null;
+
+if (isAuth) {
+  // Fetch the greatest chat ID for the authenticated user
+  const greatestChat = await db
+    .select()
+    .from(chats)
+    .where(eq(chats.userId, userId))
+    .orderBy(desc(chats.id))
+    .limit(1);
+
+  if (greatestChat.length > 0) {
+    greatestChatId = greatestChat[0].id;
+  }
+}
+
+// ----------------------
 
   return (
     <div className="w-screen min-h-screen bg-gradient-to-br from-blue-900 via-gray-900 to-black text-white">
@@ -64,11 +91,17 @@ export default async function Home() {
             <UserButton afterSignOutUrl="/" />
           </div>
           
+
+          {/* Go to chats section with some modifications */}
+          
+        
           <div className="flex mt-2 border-dashed border-white border border-2">
-            {isAuth && (
-              <Link href="/chat/1">
+            {isAuth && greatestChatId ? (
+              <Link href={`/chat/${greatestChatId}`}>
                 <Button>Go to Chats</Button>
               </Link>
+            ) : (
+              <p className="text-sm text-gray-300">No chats available</p>
             )}
           </div>
           

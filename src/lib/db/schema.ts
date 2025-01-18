@@ -15,11 +15,13 @@ export type DrizzleChat = typeof chats.$inferSelect;
 
 export const messages = pgTable('messages', {
     id: serial('id').primaryKey(),
-    chatId: integer('chat_id').references(()=>chats.id).notNull(),
+    chatId: integer('chat_id')
+      .references(() => chats.id, { onDelete: 'cascade' }) // Add cascade delete here
+      .notNull(),
     content: text('content').notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     role: userSystemEnum('role').notNull(),
-})
+  });
 
 // drizzle-orm
 

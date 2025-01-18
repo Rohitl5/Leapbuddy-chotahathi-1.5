@@ -1,6 +1,6 @@
 "use client";
 import { DrizzleChat } from "@/lib/db/schema";
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import { MessageCircle, PlusCircle } from "lucide-react";
@@ -12,6 +12,59 @@ type Props = {
 };
 
 const ChatSideBar = ({ chats, chatId }: Props) => {
+  const [menuOpen, setMenuOpen] = useState<number | null>(null);
+
+  // Toggle menu visibility for the three-dot menu
+  const toggleMenu = (chatId: number) => {
+    setMenuOpen((prev) => (prev === chatId ? null : chatId));
+  };
+
+  // Handle edit function
+  const handleEdit = async (chatId: number, currentName: string) => {
+    const newName = prompt("Enter a new name for the PDF:", currentName);
+    if (newName && newName.trim() !== currentName) {
+      try {
+        const response = await fetch(`/api/chat/${chatId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pdfName: newName.trim() }),
+        });
+        if (response.ok) {
+          alert("Name updated successfully!");
+          location.reload(); // Refresh the page to reflect changes
+        } else {
+          alert("Failed to update the name.");
+        }
+      } catch (error) {
+        console.error(error);
+        alert("An error occurred while updating the name.");
+      }
+    }
+  };
+  
+  
+
+  // Handle delete function
+  const handleDelete = async (chatId: number) => {
+    if (confirm("Are you sure you want to delete this chat?")) {
+      try {
+        const response = await fetch(`/api/chat/${chatId}`, {
+          method: "DELETE",
+        });
+        if (response.ok) {
+          alert("Chat deleted successfully!");
+          // Optionally: Refresh the page or update state
+        } else {
+          alert("Failed to delete the chat.");
+        }
+      } catch (error) {
+        console.error(error);
+        alert("An error occurred while deleting the chat.");
+      }
+    }
+  };
+  
+
   return (
     <div className="w-full h-full min-h-screen p-4 text-gray-200 bg-gray-900 flex flex-col">
       {/* "Create New Chat" button */}
@@ -25,29 +78,64 @@ const ChatSideBar = ({ chats, chatId }: Props) => {
       {/* Chat list */}
       <div className="flex flex-col gap-2 mt-4 overflow-y-auto flex-1">
         {chats.map((chat) => (
-          <Link key={chat.id} href={`/chat/${chat.id}`}>
-            <div
-              className={cn("rounded-lg p-3 text-slate-400 flex items-center", {
-                "bg-blue-600 text-white": chat.id === chatId,
-                "hover:text-white": chat.id !== chatId,
-              })}
-            >
-              <MessageCircle className="mr-2" />
-              <p className="w-full overflow-hidden text-sm truncate whitespace-nowrap text-ellipsis">
-                {chat.pdfName}
-              </p>
-            </div>
-          </Link>
+          <div key={chat.id} className="relative group">
+            <Link href={`/chat/${chat.id}`}>
+              <div
+                className={cn(
+                  "rounded-lg p-3 text-slate-400 flex items-center justify-between",
+                  {
+                    "bg-blue-600 text-white": chat.id === chatId,
+                    "hover:text-white": chat.id !== chatId,
+                  }
+                )}
+              >
+                <div className="flex items-center">
+                  <MessageCircle className="mr-2" />
+                  <p className="w-full overflow-hidden text-sm truncate whitespace-nowrap text-ellipsis">
+                    {chat.pdfName}
+                  </p>
+                </div>
+
+                {/* Three-dot menu */}
+                <div className="relative">
+                  <button
+                    onClick={() => toggleMenu(chat.id)} // Function to toggle menu visibility
+                    className="p-1 rounded-md  overflow-hidden text-slate-400 hover:bg-gray-200"
+                  >
+                    ⋮
+                  </button>
+
+                  {/* Dropdown menu */}
+                  {menuOpen === chat.id && (
+                    <div className="absolute top-full right-0 mt-1 bg-white shadow-lg rounded-lg flex flex-col">
+                      <button
+                        onClick={() => handleEdit(chat.id, chat.pdfName)}
+                        className="p-2 hover:bg-gray-200 text-left text-sm"
+                      >
+                        ✏️ Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(chat.id)}
+                        className="p-2 hover:bg-red-200 text-left text-sm"
+                      >
+                        🗑️ Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Link>
+          </div>
         ))}
       </div>
 
       {/* Footer */}
       <div className="mt-1 flex justify-center items-center h-12">
-      <Link href="/">
-        <Button className="w-full border-dashed border-white border">
-          Back To Homepage
-        </Button>
-      </Link>
+        <Link href="/">
+          <Button className="w-full border-dashed border-white border">
+            Back To Homepage
+          </Button>
+        </Link>
       </div>
     </div>
   );
