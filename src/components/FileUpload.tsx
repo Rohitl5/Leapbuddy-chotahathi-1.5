@@ -9,87 +9,89 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
 const FileUpload = () => {
-  const router = useRouter();
-  const [uploading, setUploading] = React.useState(false);
-  const [uploadComplete, setUploadComplete] = React.useState(false);
+    const router = useRouter();
+    const [uploading, setUploading] = React.useState(false);
+    const [uploadComplete, setUploadComplete] = React.useState(false);
+    const [files, setFiles] = React.useState([]);
 
-  const { mutate, isLoading } = useMutation({
-    mutationFn: async ({
-      file_key,
-      file_name,
-    }: {
-      file_key: string;
-      file_name: string;
-    }) => {
-      const response = await axios.post("/api/create-chat", {
-        file_key,
-        file_name,
-      });
-      return response.data;
-    },
-  });
+    const { mutate, isLoading } = useMutation({
+        mutationFn: async ({ files }: { files: { file_key: string; file_name: string }[] }) => {
+            const response = await axios.post("/api/create-chat", { files });
+            return response.data;
+        },
+    });
 
-  const { getRootProps, getInputProps } = useDropzone({
-    accept: { "application/pdf": [".pdf"] },
-    maxFiles: 1,
-    onDrop: async (acceptedFiles) => {
-      const file = acceptedFiles[0];
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("File too large");
-        return;
-      }
+    const { getRootProps, getInputProps } = useDropzone({
+        accept: { "application/pdf": [".pdf"] },
+        onDrop: async (acceptedFiles) => {
+            const totalSize = acceptedFiles.reduce((acc, file) => acc + file.size, 0);
+            if (totalSize > 10 * 1024 * 1024) {
+                toast.error("Total file size exceeds 10MB");
+                return;
+            }
 
-      try {
-        setUploading(true);
-        setUploadComplete(false);
-        const data = await uploadToS3(file);
-        if (!data?.file_key || !data.file_name) {
-          toast.error("Something went wrong");
-          return;
-        }
-        mutate(data, {
-          onSuccess: ({ chat_id }) => {
-            toast.success("Chat created!");
-            setUploadComplete(true);
-            router.push(`/chat/${chat_id}`);
-          },
-          onError: (err) => {
-            toast.error("Error creating chat");
-            console.error(err);
-          },
-        });
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setUploading(false);
-      }
-    },
-  });
+            try {
+                setUploading(true);
+                setUploadComplete(false);
 
-  return (
-    <div className="p-2 bg-white rounded-lg max-w-xs mx-auto">
-      <div
-        {...getRootProps({
-          className:
-            "border-dashed border-2 rounded-lg cursor-pointer bg-gray-50 py-4 px-4 flex justify-center items-center flex-col",
-        })}
-      >
-        <input {...getInputProps()} />
-        {(uploading || isLoading) && !uploadComplete ? (
-          <>
-            <Loader2 className="h-6 w-6 text-blue-500 animate-spin" />
-            <p className="mt-2 text-xs text-slate-400">Uploading to Database</p>
-            <p className="text-xs text-slate-400">Generating Vectors</p>
-          </>
-        ) : (
-          <>
-            <Inbox className="w-6 h-6 text-blue-500" />
-            <p className="mt-2 text-xs text-slate-400">Drop PDF Here</p>
-          </>
-        )}
-      </div>
-    </div>
-  );
+                const uploadPromises = acceptedFiles.map(async (file) => {
+                    const data = await uploadToS3(file);
+                    if (!data?.file_key || !data.file_name) {
+                        throw new Error("Upload failed");
+                    }
+                    return data;
+                });
+
+                const uploadedFiles = await Promise.all(uploadPromises);
+                setFiles(uploadedFiles);
+
+                mutate(
+                    { files: uploadedFiles },
+                    {
+                        onSuccess: ({ chat_group_id }) => {
+                            toast.success("Chat group created!");
+                            setUploadComplete(true);
+                            router.push(`/chat/${chat_group_id}`);
+                        },
+                        onError: (err) => {
+                            toast.error("Error creating chat group");
+                            console.error(err);
+                        },
+                    }
+                );
+            } catch (error) {
+                console.error(error);
+                toast.error("Upload failed");
+            } finally {
+                setUploading(false);
+            }
+        },
+    });
+
+    return (
+        <div className="p-2 bg-white rounded-lg max-w-xs mx-auto">
+            <div
+                {...getRootProps({
+                    className:
+                        "border-dashed border-2 rounded-lg cursor-pointer bg-gray-50 py-4 px-4 flex justify-center items-center flex-col",
+                })}
+            >
+                <input {...getInputProps()} />
+                {(uploading || isLoading) && !uploadComplete ? (
+                    <>
+                        <Loader2 className="h-6 w-6 text-blue-500 animate-spin" />
+                        <p className="mt-2 text-xs text-slate-400">Uploading to Database</p>
+                        <p className="text-xs text-slate-400">Generating Vectors</p>
+                    </>
+                ) : (
+                    <>
+                        <Inbox className="w-6 h-6 text-blue-500" />
+                        <p className="mt-2 text-xs text-slate-400">Drop PDFs Here</p>
+                    </>
+                )}
+            </div>
+        </div>
+    );
 };
 
 export default FileUpload;

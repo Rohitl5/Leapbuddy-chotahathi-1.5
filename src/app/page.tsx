@@ -6,7 +6,7 @@ import { Bold, LogIn } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
 
 import { db } from "@/lib/db";
-import { chats } from "@/lib/db/schema";
+import { chatGroups, chats } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 
 
@@ -24,9 +24,9 @@ if (isAuth) {
   // Fetch the greatest chat ID for the authenticated user
   const greatestChat = await db
     .select()
-    .from(chats)
-    .where(eq(chats.userId, userId))
-    .orderBy(desc(chats.id))
+    .from(chatGroups)
+    .where(eq(chatGroups.userId, userId))
+    .orderBy(desc(chatGroups.id))
     .limit(1);
 
   if (greatestChat.length > 0) {

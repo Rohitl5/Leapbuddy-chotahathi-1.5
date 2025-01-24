@@ -1,17 +1,17 @@
 import { db } from "@/lib/db";
-import { chats } from "@/lib/db/schema";
+import { chatGroups, chats } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function PUT(req: Request, { params }: { params: { chatId: string } }) {
   try {
-    const { pdfName } = await req.json();
+    const { name } = await req.json();
     const chatId = parseInt(params.chatId, 10);
 
-    if (!pdfName || !chatId) {
+    if (!name || !chatId) {
       return new Response("Invalid request", { status: 400 });
     }
 
-    await db.update(chats).set({ pdfName }).where(eq(chats.id, chatId));
+    await db.update(chatGroups).set({ name}).where(eq(chatGroups.id, chatId));
 
     return new Response("Chat name updated successfully!", { status: 200 });
   } catch (error) {
@@ -32,7 +32,7 @@ export async function PUT(req: Request, { params }: { params: { chatId: string }
         return new Response("Invalid request", { status: 400 });
       }
   
-      await db.delete(chats).where(eq(chats.id, chatId));
+      await db.delete(chatGroups).where(eq(chatGroups.id, chatId));
       console.log("Chat deleted successfully");
   
       return new Response("Chat deleted successfully!", { status: 200 });

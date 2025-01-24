@@ -75,7 +75,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GoogleGenerativeAIStream, StreamingTextResponse } from "ai";
 import { db } from "@/lib/db";
-import { chats, messages as _messages } from "@/lib/db/schema";
+import { chatGroups,chats, messages as _messages } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getContext } from "@/lib/context";
@@ -91,15 +91,52 @@ export async function POST(req: Request) {
     console.log("Chat ID:", chatId); // Log chat ID
     console.log("Messages:", messages); // Log messages
 
-    const _chats = await db.select().from(chats).where(eq(chats.id, chatId));
-    if (_chats.length !== 1) {
-      return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+    //  fetch the context of all the pdfs from the chatgroup
+
+          // Fetch the chat group by ID
+    const _chatGroup = await db
+    .select()
+    .from(chatGroups)
+    .where(eq(chatGroups.id, chatId))
+    .limit(1);
+
+    if (_chatGroup.length !== 1) {
+    return NextResponse.json({ error: "Chat group not found" }, { status: 404 });
     }
 
-    const fileKey = _chats[0].fileKey;
+    // Fetch all PDFs (chats) associated with the chat group
+    const _chats = await db
+    .select()
+    .from(chats)
+    .where(eq(chats.chatGroupId, chatId));
+
+    if (_chats.length === 0) {
+    return NextResponse.json({ error: "No PDFs found for this chat group" }, { status: 404 });
+    }
+
+    // Initialize an empty string to store the combined context
+    let combinedContext = "";
+
+    // Fetch the last message from the chat group
     const lastMessage = messages[messages.length - 1];
+
+    // Generate context for each PDF
+    for (const chat of _chats) {
+    const fileKey = chat.fileKey;
     const context = await getContext(lastMessage.content, fileKey);
-    console.log("Context:", context); // Log context
+    console.log(`Context for PDF (${chat.pdfName}):`, context);
+
+    // Append the context to the combined context
+    combinedContext += `\nContext for ${chat.pdfName}:\n${context}\n`;
+    }
+
+    // Log the final combined context
+    console.log("Final Combined Context:", combinedContext);
+
+
+
+    // finish
+
 
     let prompt = `
       Your name is LeapBuddy.
@@ -108,7 +145,7 @@ export async function POST(req: Request) {
       The user has asked you to ${lastMessage.content}.
       You need to refer to the PDF and retrieve the most relevant knowledge from it, and combine it with your global knowledge, to frame a suitable answer for the user's question.
       START CONTEXT BLOCK
-      ${context}
+      ${combinedContext}
       END OF CONTEXT BLOCK
       START HISTORY BLOCK`;
     for (let i = 0; i < messages.length - 1; i++) {
