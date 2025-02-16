@@ -37,10 +37,10 @@ if (isAuth) {
 // ----------------------
 
   return (
-    <div className="w-screen min-h-screen bg-gradient-to-br from-blue-900 via-gray-900 to-black text-white">
+    <div className="w-screen min-h-screen bg-gradient-to-br from-blue-100 via-blue-400 to-red-400 text-white">
       
       {/* Navbar */}
-      <header className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-800 via-gray-800 to-black shadow-md">
+      <header className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-300 via-blue-600 to-red-600 shadow-md">
         
         {/* Left-aligned logo and text */}
         <div className="flex items-center space-x-4">
@@ -67,7 +67,7 @@ if (isAuth) {
           ) : (
             <Link href="/">
   <Button variant="ghost" className="text-white">
-    Visit <span className="font-bold">New Leap Labs</span>
+    We <span className="font-bold">Believe</span>
   </Button>
 </Link>
           )}
@@ -77,17 +77,13 @@ if (isAuth) {
 
       {/* Main Content */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-        <div className="flex flex-col items-center text-center">
+        <div className="flex flex-row  items-center ">
           
-          {/* Logo Section */}
-          <img
-            src="/ProfilePicturePhoto.png" // Update this path to your logo's actual path
-            alt="NLL Logo"
-            className="w-32 h-auto mb-4" // Adjust width as needed
-          />
+         
           
+          <div className="flex flex-col mr-10 pr-4 items-left tet-left">
           <div className="flex items-center">
-            <h1 className="mr-3 text-5xl font-semibold">LeapBuddy</h1>
+            <h1 className="mr-3 text-5xl text-black font-semibold">LeapBuddy</h1>
             <UserButton afterSignOutUrl="/" />
           </div>
           
@@ -95,7 +91,7 @@ if (isAuth) {
           {/* Go to chats section with some modifications */}
           
         
-          <div className="flex mt-2 border-dashed border-white border border-2">
+          <div className="flex mt-2 border-2 border-white m-auto ml-0 bg-black p-1 ">
             {isAuth && greatestChatId ? (
               <Link href={`/chat/${greatestChatId}`}>
                 <Button>Go to Chats</Button>
@@ -105,11 +101,11 @@ if (isAuth) {
             )}
           </div>
           
-          <p className="max-w-xl mt-1 text-lg text-slate-300">
+          <p className="max-w-xl mt-1 text-lg text-black text-slate-300">
             Handle all your documentation references, research queries, and planner's blocks with ease. LeapBuddy is your answer to all kinds of queries.
           </p>
 
-          <div className="w-full mt-4">
+          <div className="w-80 mt-4 mr-0">
             {isAuth ? (
               <FileUpload />
             ) : (
@@ -121,6 +117,15 @@ if (isAuth) {
               </Link>
             )}
           </div>
+          </div>
+
+           {/* Logo Section */}
+           
+           <img
+            src="/ProfilePicturePhoto.png" // Update this path to your logo's actual path
+            alt="NLL Logo"
+            className="w-64 h-auto mb-4" // Adjust width as needed
+          />
         </div>
       </div>
     </div>
