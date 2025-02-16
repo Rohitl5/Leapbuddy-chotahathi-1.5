@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { chatGroups, chats } from "@/lib/db/schema";
+import { chatGroups} from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function PUT(req: Request, { params }: { params: { chatId: string } }) {
